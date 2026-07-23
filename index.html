@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d47a1"><meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>ECG Assist V5</title><link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header><h1>ECG Assist V5</h1><p>Digitalización robusta, detección P‑Q‑R‑S‑T y medición automática experimental</p></header>
+<div class="warning"><b>No diagnostica.</b> Las mediciones automáticas pueden ser erróneas. Revisa siempre la imagen, la señal reconstruida y los marcadores. No tomes decisiones terapéuticas con esta aplicación.</div>
+<main>
+<section class="card"><h2>1. Paciente</h2><div class="grid2">
+<div><label>Nombre</label><input id="firstName"></div><div><label>Apellidos</label><input id="lastName"></div>
+<div><label>Edad</label><input id="age" type="number"></div><div><label>Peso (kg)</label><input id="weight" type="number" step=".1"></div>
+</div></section>
+
+<section class="card"><h2>2. Imagen del ECG</h2><div class="actions">
+<button id="startCamera" class="primary">📷 Cámara</button><button id="capturePhoto" disabled>Capturar</button>
+<label class="filebtn">🖼 JPG / PNG<input id="imageInput" type="file" accept="image/jpeg,image/png"></label>
+<label class="filebtn">📄 PDF<input id="pdfInput" type="file" accept="application/pdf"></label>
+</div><video id="camera" autoplay playsinline></video><img id="preview"><canvas id="sourceCanvas" class="hidden"></canvas>
+<div id="status" class="status">Selecciona un ECG. Para máxima precisión usa una tira horizontal o recórtala manualmente.</div></section>
+
+<section class="card"><h2>3. Preparación y calibración</h2>
+<div class="actions"><button id="deskewBtn" disabled>Corregir inclinación</button><button id="autoRoiBtn" disabled>Detectar tira</button><button id="fullBtn" disabled>Imagen completa</button></div>
+<p class="small">Arrastra sobre la imagen para seleccionar manualmente una sola tira de ritmo. La selección manual suele ser más fiable que el recorte automático.</p>
+<canvas id="roiCanvas" class="viewer" height="440"></canvas><div id="roiText" class="status">Sin región seleccionada.</div>
+<div class="calibration">
+<div><label>Velocidad del papel</label><select id="paperSpeed"><option value="25">25 mm/s</option><option value="50">50 mm/s</option></select></div>
+<div><label>Ganancia</label><select id="gain"><option value="10">10 mm/mV</option><option value="5">5 mm/mV</option><option value="20">20 mm/mV</option></select></div>
+<div><label>Calibración de rejilla</label><select id="gridMode"><option value="auto">Automática</option><option value="manual">Manual</option></select></div>
+<div><label>Píxeles por mm</label><input id="manualGrid" type="number" step=".1" placeholder="Automático"></div>
+</div></section>
+
+<section class="card"><h2>4. Digitalización V5</h2>
+<div class="actions"><button id="runBtn" class="primary" disabled>Digitalizar, detectar y medir</button><button id="resetBtn" disabled>Restaurar</button></div>
+<div id="progress" class="hidden"><div id="progressText"></div><div class="bar"><div id="progressBar"></div></div></div>
+<div class="metrics">
+<div><span>Calidad</span><b id="quality">—</b></div><div><span>Rejilla</span><b id="grid">—</b></div>
+<div><span>Cobertura</span><b id="coverage">—</b></div><div><span>QRS válidos</span><b id="beats">—</b></div>
+<div><span>Latidos completos</span><b id="complete">—</b></div><div><span>Confianza</span><b id="digitConfidence">—</b></div>
+</div>
+<div class="tabs"><button data-view="signal" class="active">Señal y ondas</button><button data-view="median">Latido mediano</button><button data-view="mask">Máscara</button><button data-view="gridless">Sin rejilla</button></div>
+<canvas id="signalCanvas" class="viewer" height="330"></canvas><canvas id="debugCanvas" class="viewer hidden" height="520"></canvas>
+<pre id="details"></pre></section>
+
+<section class="card"><h2>5. Medición automática</h2>
+<p class="small">Se muestran mediana, dispersión entre latidos y número de mediciones aceptadas. Los campos pueden corregirse manualmente.</p>
+<div class="measurements">
+<div><label>FC <span id="tagHr" class="tag manual">MANUAL</span></label><input id="heartRate" type="number"><small id="metaHr"></small></div>
+<div><label>PR <span id="tagPr" class="tag manual">MANUAL</span></label><input id="pr" type="number"><small id="metaPr"></small></div>
+<div><label>QRS <span id="tagQrs" class="tag manual">MANUAL</span></label><input id="qrs" type="number"><small id="metaQrs"></small></div>
+<div><label>QT <span id="tagQt" class="tag manual">MANUAL</span></label><input id="qt" type="number"><small id="metaQt"></small></div>
+<div><label>QTc <span id="tagQtc" class="tag manual">MANUAL</span></label><input id="qtc" type="number"><small id="metaQtc"></small></div>
+<div><label>Ritmo <span id="tagRhythm" class="tag manual">MANUAL</span></label><select id="rhythm"><option value="indeterminado">Indeterminado</option><option value="sinusal">Regular compatible con sinusal</option><option value="regular">Regular no clasificable</option><option value="irregular">Irregular</option><option value="fa">Muy irregular, posible FA</option></select></div>
+</div>
+<label>Observaciones</label><textarea id="notes"></textarea><div class="actions"><button id="classifyBtn" class="primary">Clasificar parámetros</button></div></section>
+
+<section class="results">
+<div class="card"><h2>Clasificación</h2><div id="classificationBox" class="classification gray"><div class="emoji">⚪</div><h3>Sin analizar</h3><p>Digitaliza el ECG.</p></div></div>
+<div class="card"><h2>Confianza</h2><div id="confidence" class="confidence">—</div><p class="small">Confianza técnica, no certeza diagnóstica.</p></div>
+<div class="card"><h2>Alertas</h2><div id="alerts">Sin alertas.</div></div>
+</section>
+<section class="results two"><div class="card"><h2>Explicación</h2><div id="explanation">Sin resultado.</div></div><div class="card"><h2>Recomendaciones</h2><div id="recommendations">Sin recomendaciones.</div></div></section>
+
+<section class="card no-print"><h2>6. Guardar e instalar</h2><div class="actions"><button id="saveBtn" class="primary">Guardar</button><button id="printBtn">Imprimir / PDF</button><button id="installBtn" class="hidden">Instalar aplicación</button><button id="newBtn" class="danger">Nuevo estudio</button></div></section>
+<section class="card" id="historyCard"><h2>Historial local</h2><div id="history"></div></section>
+</main>
+<script src="app.js"></script>
+</body></html>
