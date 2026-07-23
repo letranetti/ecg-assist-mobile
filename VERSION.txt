@@ -1,3 +1,0 @@
-ECG Assist V4.1
-Build: 2026-07-23
-Cache: ecg-assist-v41-20260723
